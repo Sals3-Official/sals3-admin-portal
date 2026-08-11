@@ -1,0 +1,11 @@
+.next
+node_modules
+out
+build
+coverage
+playwright-report
+test-results
+package-lock.json
+
+# Per-person Claude Code state - machine config, not project source
+.claude
