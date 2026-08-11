@@ -1,0 +1,50 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# testing
+/coverage
+/playwright-report
+/test-results
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# ...except the template, which holds variable names and no values. Teammates
+# need it to know what to set, so it must be committable.
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# safety net: scripts/typecheck-clean-next.mjs's temp swap dir, in case
+# it's ever left behind after an interrupted run
+.next-typecheck-tmp-*
+
+# Per-person Claude Code state (local permissions, session scratch). Machine
+# config, not project source - the shared rules live in CLAUDE.md/AGENTS.md.
+.claude/
