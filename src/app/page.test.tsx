@@ -1,39 +1,61 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from './page';
 
+const mocks = vi.hoisted(() => ({
+  getSessionEmployee: vi.fn(),
+  redirect: vi.fn(),
+  replace: vi.fn(),
+  refresh: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/session', () => ({
+  getSessionEmployee: mocks.getSessionEmployee,
+}));
+
+vi.mock('next/navigation', () => ({
+  redirect: mocks.redirect,
+  useRouter: () => ({
+    replace: mocks.replace,
+    refresh: mocks.refresh,
+  }),
+}));
+
 describe('HomePage', () => {
-  it('identifies itself as the Admin Portal control plane', () => {
-    render(<HomePage />);
+  beforeEach(() => {
+    mocks.getSessionEmployee.mockReset();
+    mocks.redirect.mockReset();
+    // Real next/navigation redirect() throws to unwind rendering immediately
+    // - match that here so a test cannot pass by accident via rendering code
+    // that runs past a redirect the real implementation would have aborted.
+    mocks.redirect.mockImplementation(() => {
+      throw new Error('NEXT_REDIRECT');
+    });
+  });
+
+  it('presents the employee sign-in form when signed out', async () => {
+    mocks.getSessionEmployee.mockResolvedValue(null);
+
+    render(await HomePage());
 
     expect(screen.getByText('Sals3 Admin Portal')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Platform control plane' }),
+      screen.getByRole('heading', { level: 1, name: 'Employee sign-in' }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
-  it('states plainly that nothing is implemented yet', () => {
-    render(<HomePage />);
+  it('redirects to /dashboard instead of re-showing the form for a live session', async () => {
+    mocks.getSessionEmployee.mockResolvedValue({
+      id: 'employee-1',
+      email: 'employee@sals3.com',
+    });
 
-    expect(screen.getAllByText('Not implemented').length).toBeGreaterThan(0);
-    expect(
-      screen.getByText('No authoritative data source'),
-    ).toBeInTheDocument();
-  });
+    await expect(HomePage()).rejects.toThrow('NEXT_REDIRECT');
 
-  /**
-   * The regression this guards is the whole point of the page: a later edit
-   * that "fills in" the bootstrap screen with plausible seller counts, order
-   * totals, or a green "live" pill would violate ADR-014's prohibition on a
-   * fabricated console. Digits are the cheap, reliable tell.
-   */
-  it('renders no numeric metric of any kind', () => {
-    const { container } = render(<HomePage />);
-    // The brand name itself contains a digit, so it is removed before the
-    // check rather than weakening the pattern - "Sals3" is the only string on
-    // this page allowed to carry one.
-    const text = (container.textContent ?? '').replace(/Sals3/g, '');
-
-    expect(text).not.toMatch(/\d/);
+    expect(mocks.redirect).toHaveBeenCalledWith('/dashboard');
   });
 });
