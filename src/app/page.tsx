@@ -1,53 +1,43 @@
-import UnavailableNotice from '@/components/admin/UnavailableNotice';
+import { redirect } from 'next/navigation';
+import EmployeeSignInForm from '@/components/admin/EmployeeSignInForm';
+import { getSessionEmployee } from '@/lib/auth/session';
 
 /**
- * Bootstrap landing page.
+ * Sign-in gate. Mirrors sals3-portal's own root route: "/" is the sign-in
+ * screen, not a dashboard. The shell (card, spacing, field layout) is forked
+ * from sals3-portal's AuthShell/LoginForm so the two products share one
+ * login pattern; only the color layer differs (see globals.css).
  *
- * This is deliberately not a dashboard. Gate 0 established that only three
- * ecosystem domains have an authoritative backing service today (country
- * policy, seller-account lifecycle, supplier/provider control), and none of
- * them is wired to this repository yet. Rendering tiles, totals, or a "live"
- * status here would be exactly the fabricated console ADR-014 prohibits.
+ * A live session redirects straight to /dashboard rather than re-showing the
+ * form - the deny-by-default check that gates /dashboard itself is what
+ * actually matters; this redirect is just not making an already-signed-in
+ * employee look at a login screen again.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const employee = await getSessionEmployee();
+
+  if (employee !== null) {
+    redirect('/dashboard');
+  }
+
   return (
-    <main className="mx-auto flex min-h-full max-w-3xl flex-col gap-section px-gutter py-section">
-      <header>
-        <p className="font-heading text-sm font-semibold tracking-wide text-primary uppercase">
-          Sals3 Admin Portal
-        </p>
-        <h1 className="mt-2 font-heading text-2xl font-semibold">
-          Platform control plane
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Internal employee surface. Repository bootstrap only — no employee
-          authentication, permission model, policy publication, or ecosystem
-          data is implemented in this build.
-        </p>
-      </header>
-
-      <UnavailableNotice title="Employee sign-in" reason="NOT_IMPLEMENTED">
-        Employee identity, deny-by-default authorization, and step-up
-        authentication are the next approved slice. Until they exist this
-        application grants no access to anything, because there is nothing
-        behind it to reach.
-      </UnavailableNotice>
-
-      <UnavailableNotice title="Market governance" reason="NOT_IMPLEMENTED">
-        Versioned seller-operating and buyer-destination country policy is the
-        confirmed first end-to-end domain. Publication, approval, audit, and
-        rollback are not built yet.
-      </UnavailableNotice>
-
-      <UnavailableNotice
-        title="Global orders, finance, and listings"
-        reason="NO_AUTHORITATIVE_SOURCE"
-      >
-        No Product, Variant, Offer, order, checkout, payment, or ledger model
-        exists anywhere in the Sals3 ecosystem. Any total shown here would be
-        invented, so these domains stay unavailable until their source of truth
-        is built and agreed.
-      </UnavailableNotice>
+    <main className="min-h-svh bg-background px-4 py-8 text-foreground">
+      <div className="mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-md flex-col justify-center">
+        <div className="mb-5">
+          <p className="font-heading text-sm font-semibold tracking-wide text-primary uppercase">
+            Sals3 Admin Portal
+          </p>
+          <h1 className="mt-1 font-heading text-xl font-semibold tracking-normal">
+            Employee sign-in
+          </h1>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Use your Sals3 employee email and password.
+          </p>
+        </div>
+        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <EmployeeSignInForm />
+        </section>
+      </div>
     </main>
   );
 }

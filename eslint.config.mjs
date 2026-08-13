@@ -122,6 +122,14 @@ const eslintConfig = defineConfig([
           devDependencies: true,
         },
       ],
+      // A browser-driving test walks one page through a sequence of states,
+      // so its awaits are ordered by nature: visiting a list of routes must
+      // happen one at a time, and `Promise.all` over the same `page` would
+      // race navigations against each other. The Airbnb defaults exist to
+      // catch accidentally serialised parallel work, which is the opposite
+      // of what these loops are.
+      'no-await-in-loop': 'off',
+      'no-restricted-syntax': 'off',
     },
   },
   globalIgnores([

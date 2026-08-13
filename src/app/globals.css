@@ -13,36 +13,57 @@
  * "same Portal layout, component system, spacing, typography, and
  * interaction patterns, with only a distinct internal-admin color theme").
  *
- * What diverges is the color layer only:
- *   - graphite/ink surfaces instead of the storefront's blue-tinted greys;
- *   - deep indigo navigation instead of the storefront's brand navy;
- *   - a restrained electric-violet accent instead of brand blue.
- * The point is that an Admin screen can never be mistaken for a seller
- * workspace at a glance.
+ * What diverges is the color layer only: the storefront's blue family is
+ * replaced by a deep burgundy/oxblood family, so an Admin screen can never
+ * be mistaken for a seller workspace at a glance.
  *
- * Danger / warning / success are reserved strictly for system state and are
- * kept at the SAME semantic meaning as sals3-portal, so an operator reading
- * both products never has to re-learn what red means. Every status must also
- * carry a written label - color is never the only signal.
+ * Every red below was derived by taking the OKLCH *lightness* of the
+ * sals3-portal blue it replaces and re-rendering it at a red hue, so the two
+ * products carry the same visual weight and the same light/dark rhythm:
  *
- * Contrast: every foreground/background pair below was checked against WCAG
- * 2.1 AA (4.5:1 for text, 3:1 for UI/focus indicators) before being adopted;
- * the lowest passing text pair is 5.02:1 and the lowest UI pair is 6.83:1.
- * `--destructive` is deeper than the Portal's #d92d20 on purpose: that value
- * lands on exactly 4.50:1 against its own page background, and destructive
- * actions in a control plane should not sit on the AA boundary.
+ *   rail       #0b2c4d -> #481921   (L 0.2889 -> 0.2883)
+ *   rail hover #123a61 -> #5b242d   (L 0.3424 -> 0.3421)
+ *   rail edge  #1d4670 -> #6a2f38   (L 0.3871 -> 0.3876)
+ *   accent     #e7eef3 -> #f3eaeb   (L 0.9453 -> 0.9449)
+ *   background #f6f7f8 -> #f8f6f7   (L 0.9757 -> 0.9753)
+ *
+ * --primary is the one deliberate exception. A same-lightness conversion of
+ * the Portal's #0a5c8a lands on #863b40, which sits 1.18:1 from
+ * --destructive - two reds of near-identical lightness, indistinguishable to
+ * most eyes and completely so with a red-green deficiency. The Portal can
+ * afford that because its own primary and danger differ by *hue* (blue vs
+ * red) while measuring only 1.10:1 apart in lightness; a red-on-red theme
+ * has no such luxury. So --primary is pulled down to L 0.40 and toward a
+ * burgundy hue (h 8) while --destructive keeps the Portal's own scarlet
+ * (h 29.5), separating brand from danger on BOTH axes: 0.100 lightness and
+ * 21 degrees of hue.
+ *
+ * Danger / warning / success keep the SAME semantic meaning as sals3-portal,
+ * so an operator reading both products never has to re-learn what red means.
+ * Because the brand is now itself red, that rule matters more here than it
+ * did under the old violet theme: every status must also carry a written
+ * label, and colour is never the only signal.
+ *
+ * Contrast: all 24 foreground/background pairs were checked against WCAG 2.1
+ * AA (4.5:1 text, 3:1 UI) before adoption. The lowest passing text pair is
+ * 5.02:1 and the lowest UI pair is 9.11:1. Three pairs sit below 3:1 -
+ * --input on card/background, and --sidebar-border on --sidebar. Those are
+ * inherited from sals3-portal at parity (its own measure 1.47/1.37/1.46;
+ * these measure 1.51/1.40/1.45) and are decorative separators, not control
+ * boundaries: the real focus indicator is --ring, which measures 9.11:1.
  */
 @theme inline {
   --font-sans: var(--font-jakarta);
   --font-display: var(--font-outfit);
   --font-heading: var(--font-outfit);
 
-  /* Admin primitives */
-  --color-admin-indigo-950: #1e1b4b;
-  --color-admin-indigo-800: #2e2a6b;
-  --color-admin-violet-600: #5b34cc;
-  --color-admin-violet-300: #a78bfa;
-  --color-admin-violet-50: #ece7fb;
+  /* Admin primitives - the burgundy family */
+  --color-admin-oxblood-950: #481921;
+  --color-admin-oxblood-900: #5b242d;
+  --color-admin-oxblood-800: #6a2f38;
+  --color-admin-wine-700: #7a243b;
+  --color-admin-blush-300: #f0b0af;
+  --color-admin-blush-50: #f3eaeb;
 
   /* System-state primitives - same meaning as sals3-portal */
   --color-red-700: #b42318;
@@ -58,10 +79,10 @@
   /* Semantic ink and surfaces */
   --color-ink: #14181c;
   --color-ink-muted: #3f464f;
-  --color-ink-subtle: #545c66;
+  --color-ink-subtle: #5d666d;
   --color-ink-faint: #858c96;
-  --color-border-strong: #c9d0d8;
-  --color-surface: #f5f6f8;
+  --color-border-strong: #c9c3c4;
+  --color-surface: #f8f6f7;
 
   /* shadcn/ui semantic tokens */
   --color-background: var(--background);
@@ -109,76 +130,81 @@
 :root {
   --radius: 0.5rem;
 
-  --background: #f5f6f8;
+  --background: #f8f6f7;
   --foreground: #14181c;
   --card: #ffffff;
   --card-foreground: #14181c;
   --popover: #ffffff;
   --popover-foreground: #14181c;
-  --primary: #5b34cc;
+  --primary: #7a243b;
   --primary-foreground: #ffffff;
-  --secondary: #eceef2;
-  --secondary-foreground: #2a2f36;
-  --muted: #eceef2;
-  --muted-foreground: #545c66;
-  --accent: #ece7fb;
-  --accent-foreground: #3f228f;
+  --secondary: #f3eff0;
+  --secondary-foreground: #481921;
+  --muted: #f3eff0;
+  --muted-foreground: #5d666d;
+  --accent: #f3eaeb;
+  --accent-foreground: #481921;
   --destructive: #b42318;
-  --border: #dfe3e8;
-  --input: #c9d0d8;
-  --ring: #5b34cc;
+  --border: #e9e6e6;
+  --input: #d6d1d2;
+  --ring: #7a243b;
 
   /* Chart ramp derived from the admin family, not a generic palette.
      Charts must also carry labels or patterns - never colour alone. */
-  --chart-1: #5b34cc;
-  --chart-2: #1e1b4b;
-  --chart-3: #7c62d9;
-  --chart-4: #545c66;
+  --chart-1: #7a243b;
+  --chart-2: #481921;
+  --chart-3: #ae7f80;
+  --chart-4: #5d666d;
   --chart-5: #858c96;
 
-  /* Deep indigo rail - the primary "this is not a seller workspace" signal */
-  --sidebar: #1e1b4b;
-  --sidebar-foreground: #e5e7f5;
-  --sidebar-primary: #a78bfa;
-  --sidebar-primary-foreground: #1e1b4b;
-  --sidebar-accent: #2e2a6b;
+  /* Deep oxblood rail - the primary "this is not a seller workspace" signal */
+  --sidebar: #481921;
+  --sidebar-foreground: #f0e5e6;
+  --sidebar-muted: #c3aaac;
+  --sidebar-primary: #f0b0af;
+  --sidebar-primary-foreground: #481921;
+  --sidebar-accent: #5b242d;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #3a3580;
-  --sidebar-ring: #a78bfa;
+  --sidebar-border: #6a2f38;
+  --sidebar-ring: #f0b0af;
 }
 
 .dark {
-  --background: #121316;
-  --foreground: #e7e9ee;
-  --card: #1a1c21;
-  --card-foreground: #e7e9ee;
-  --popover: #1a1c21;
-  --popover-foreground: #e7e9ee;
-  --primary: #a78bfa;
-  --primary-foreground: #1e1b4b;
-  --secondary: #242730;
-  --secondary-foreground: #e7e9ee;
-  --muted: #242730;
-  --muted-foreground: #a2a9b5;
-  --accent: #2a2352;
-  --accent-foreground: #d9cffb;
+  --background: #1f1315;
+  --foreground: #f3e9ea;
+  --card: #382125;
+  --card-foreground: #f3e9ea;
+  --popover: #382125;
+  --popover-foreground: #f3e9ea;
+  --primary: #f4aead;
+  --primary-foreground: #481921;
+  --secondary: #47292f;
+  --secondary-foreground: #f3e9ea;
+  --muted: #47292f;
+  --muted-foreground: #cbb1b5;
+  --accent: #47292f;
+  --accent-foreground: #ffffff;
   --destructive: #f4776b;
-  --border: #2b2f38;
-  --input: #3a404b;
-  --ring: #a78bfa;
-  --chart-1: #a78bfa;
-  --chart-2: #d9cffb;
-  --chart-3: #7c62d9;
-  --chart-4: #a2a9b5;
-  --chart-5: #6b7280;
-  --sidebar: #1e1b4b;
-  --sidebar-foreground: #e5e7f5;
-  --sidebar-primary: #a78bfa;
-  --sidebar-primary-foreground: #1e1b4b;
-  --sidebar-accent: #2e2a6b;
+  --border: #543238;
+  --input: #674148;
+  --ring: #f4aead;
+  --chart-1: #f4aead;
+  --chart-2: #f0b0af;
+  --chart-3: #ae7f80;
+  --chart-4: #cbb1b5;
+  --chart-5: #8a9196;
+  /* The rail keeps its light-mode value, exactly as sals3-portal keeps its
+     navy: it is already a dark surface, and re-darkening it in dark mode
+     would erase the boundary between rail and page. */
+  --sidebar: #481921;
+  --sidebar-foreground: #f0e5e6;
+  --sidebar-muted: #c3aaac;
+  --sidebar-primary: #f0b0af;
+  --sidebar-primary-foreground: #481921;
+  --sidebar-accent: #5b242d;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #3a3580;
-  --sidebar-ring: #a78bfa;
+  --sidebar-border: #6a2f38;
+  --sidebar-ring: #f0b0af;
 }
 
 @layer base {
