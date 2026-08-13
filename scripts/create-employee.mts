@@ -9,10 +9,11 @@
  */
 /* eslint-disable import/extensions -- extensionless matches this codebase's
    scripts/ convention. */
+import { randomUUID } from 'node:crypto';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { hashPassword } from '../src/lib/auth/password';
-import { employees } from '../src/lib/db/schema';
+import { auditEvents, employees } from '../src/lib/db/schema';
 
 try {
   process.loadEnvFile('.env.local');
@@ -50,12 +51,35 @@ if (connectionString === undefined || connectionString === '') {
 // the unwrapped function) - see sals3-portal's own create-portal-user.mts,
 // which opens its own connection for the same reason.
 const sql = postgres(connectionString, { max: 1 });
-const db = drizzle(sql, { schema: { employees } });
+const db = drizzle(sql, { schema: { auditEvents, employees } });
 
 const passwordHash = await hashPassword(password);
+const normalisedEmail = email.toLowerCase();
 
-await db.insert(employees).values({ email: email.toLowerCase(), passwordHash });
+// The insert and its audit record commit together or not at all. Creating an
+// employee who can reach the control plane, with no record that it happened,
+// is exactly the gap rule 6 exists to close.
+await db.transaction(async (tx) => {
+  const [created] = await tx
+    .insert(employees)
+    .values({ email: normalisedEmail, passwordHash })
+    .returning({ id: employees.id });
 
-console.log(`Created employee ${email.toLowerCase()}.`);
+  // Actor is CLI, not the new employee: a local operator ran this, and no
+  // session established who. Naming the created account as its own creator
+  // would read as self-provisioning, which is not what happened.
+  await tx.insert(auditEvents).values({
+    correlationId: randomUUID(),
+    actorType: 'CLI',
+    actorLabel: 'cli:create-employee',
+    action: 'EMPLOYEE_PROVISIONED',
+    scope: `employee:${created.id}`,
+    reason: 'Employee account created by the local provisioning script.',
+    // No password material, hashed or otherwise (AGENTS.md rule 7).
+    afterState: { email: normalisedEmail },
+  });
+});
+
+console.log(`Created employee ${normalisedEmail}.`);
 await sql.end();
 process.exit(0);

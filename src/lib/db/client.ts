@@ -27,6 +27,26 @@ const CONNECT_TIMEOUT_SECONDS = 10;
 
 export type Database = ReturnType<typeof drizzle<typeof schema>>;
 
+/** One transaction's reserved connection. */
+export type DbTransaction = Parameters<
+  Parameters<Database['transaction']>[0]
+>[0];
+
+/**
+ * Anything that can run a statement: the pooled client, or one transaction's
+ * reserved connection. Functions that touch the database take one of these
+ * rather than reaching for `getDb()` themselves.
+ *
+ * That is not a style preference. `db.transaction()` reserves its own
+ * `postgres.js` connection, so a statement issued through `getDb()` from
+ * inside a transaction callback runs on a *different* connection and cannot
+ * see the uncommitted rows around it. Passing the executor makes "which
+ * connection does this run on?" a compile-time question - which matters most
+ * for the audit trail, where the record and the change it describes must
+ * commit together or not at all.
+ */
+export type DbExecutor = Database | DbTransaction;
+
 const globalForDb = globalThis as unknown as {
   sals3AdminSql?: ReturnType<typeof postgres>;
   sals3AdminDb?: Database;
