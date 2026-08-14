@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { employeeScope, GLOBAL_SCOPE } from '@/lib/audit/actions';
+import { recordAuditEvent } from '@/lib/audit/record';
 import { createSession } from '@/lib/auth/session';
 import { getDummyPasswordHash, verifyPassword } from '@/lib/auth/password';
 import { signInSchema } from '@/lib/auth/schemas';
@@ -20,6 +22,9 @@ export async function POST(request: Request) {
   const parsed = signInSchema.safeParse(body);
 
   if (!parsed.success) {
+    // Nothing usable to attribute a record to - a malformed body has no
+    // attempted address to name, and inventing one would be worse than the
+    // gap. The generic 401 still stands.
     return invalidCredentials();
   }
 
@@ -40,10 +45,33 @@ export async function POST(request: Request) {
   );
 
   if (employee === undefined || !passwordMatches) {
+    // Recorded as ANONYMOUS with the attempted address: the request proved
+    // no identity, so naming an employee would assert one it never
+    // established. The reason deliberately does not say whether the address
+    // exists - the trail is readable by anyone who can sign in, and it must
+    // not become the account-enumeration oracle the 401 refuses to be.
+    await recordAuditEvent(db, {
+      actor: { type: 'ANONYMOUS', label: parsed.data.email },
+      action: 'EMPLOYEE_SIGN_IN_FAILED',
+      scope: GLOBAL_SCOPE,
+      reason: 'Credential rejected at the sign-in endpoint.',
+    });
+
     return invalidCredentials();
   }
 
   await createSession(employee.id);
+
+  await recordAuditEvent(db, {
+    actor: {
+      type: 'EMPLOYEE',
+      employeeId: employee.id,
+      label: employee.email,
+    },
+    action: 'EMPLOYEE_SIGNED_IN',
+    scope: employeeScope(employee.id),
+    reason: 'Employee authenticated with email and password.',
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -135,6 +135,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     '.next/**',
     '.next-typecheck-tmp-*/**',
+    // Agent worktrees are separate checkouts with their own node_modules and
+    // their own lint run. Linting them from here resolves every import
+    // against the parent's tree and reports errors for code this checkout
+    // does not own.
+    '.claude/worktrees/**',
     'out/**',
     'build/**',
     'coverage/**',

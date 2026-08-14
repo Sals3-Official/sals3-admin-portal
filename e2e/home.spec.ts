@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { eq } from 'drizzle-orm';
+
 import { hashPassword } from '../src/lib/auth/password';
 import getDb from '../src/lib/db/client';
 import { employees } from '../src/lib/db/schema';
@@ -59,10 +59,14 @@ test.describe('real employee sign-in', () => {
       .onConflictDoUpdate({ target: employees.email, set: { passwordHash } });
   });
 
-  test.afterAll(async () => {
-    const db = getDb();
-    await db.delete(employees).where(eq(employees.email, email));
-  });
+  /**
+   * No teardown. Signing in appends an audit event, and
+   * `audit_events.actor_employee_id` is `ON DELETE RESTRICT` - so an
+   * employee who has acted can no longer be deleted, and nulling the link
+   * first is an `UPDATE` the append-only trigger refuses.
+   *
+   * The seed above is idempotent, so re-running reuses the row.
+   */
 
   test('reaches the deny-by-default dashboard and signs out', async ({
     page,

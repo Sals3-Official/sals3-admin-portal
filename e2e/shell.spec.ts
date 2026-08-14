@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { eq } from 'drizzle-orm';
+
 import { hashPassword } from '../src/lib/auth/password';
 import getDb from '../src/lib/db/client';
 import { employees } from '../src/lib/db/schema';
@@ -24,10 +24,14 @@ test.beforeAll(async () => {
     .onConflictDoUpdate({ target: employees.email, set: { passwordHash } });
 });
 
-test.afterAll(async () => {
-  const db = getDb();
-  await db.delete(employees).where(eq(employees.email, EMAIL));
-});
+/**
+ * No teardown. Signing in appends an audit event, and
+ * `audit_events.actor_employee_id` is `ON DELETE RESTRICT` - so an employee
+ * who has acted can no longer be deleted, and nulling the link first is an
+ * `UPDATE` the append-only trigger refuses.
+ *
+ * The seed above is idempotent, so re-running reuses the row.
+ */
 
 async function signIn(page: Page) {
   await page.goto('/');
@@ -67,6 +71,9 @@ test('every navigation destination is reachable and states what is unavailable',
 }) => {
   await signIn(page);
 
+  // Audit trail is deliberately absent: it is the one destination with a real
+  // backing service now, so it renders events rather than a notice. Its own
+  // coverage lives in audit.spec.ts.
   const destinations = [
     [
       'Seller countries',
@@ -82,7 +89,6 @@ test('every navigation destination is reachable and states what is unavailable',
     ['Campaigns', '/marketing', 'Global marketing and communications'],
     ['Supplier providers', '/providers', 'Supplier provider governance'],
     ['Publications', '/policy/publications', 'Policy publications'],
-    ['Audit trail', '/policy/audit', 'Audit trail'],
     ['Platform pricing', '/pricing', 'Commercial pricing governance'],
   ] as const;
 
