@@ -7,7 +7,8 @@ export type NavIconName =
   | 'plug'
   | 'scroll-text'
   | 'history'
-  | 'coins';
+  | 'coins'
+  | 'tags';
 
 export type NavItem = {
   href: string;
@@ -32,9 +33,12 @@ export type NavGroup = {
 };
 
 /**
- * The six capability domains ADR-014 names for this application, plus an
- * Overview. These are the approved scope of the control plane - not an
- * invented menu.
+ * The capability domains ADR-014 and the owner's control-tower direction
+ * name for this application, plus an Overview. These are the approved scope
+ * of the control plane - not an invented menu. Catalogue governance (the
+ * part32 direction doc's domain 4, "Catalogue and listings") is the seventh,
+ * added 2026-08-15 for the CJ-category-to-Sals3-v1-taxonomy mapping decision
+ * ADR-014 assigns to this application alone.
  *
  * Deliberately no badge/count field anywhere. sals3-portal carries counts
  * only where a real query backs them and omits them entirely where it does
@@ -152,6 +156,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: 'coins',
         description:
           'Platform-owned reference FX, Sals3 fees, and guardrails only. Merchant margins, product prices, and merchant FX adjustments are Seller Portal concerns (ADR-015).',
+      },
+    ],
+  },
+  {
+    label: 'Catalogue governance',
+    icon: 'tags',
+    solo: true,
+    items: [
+      {
+        href: '/catalog/category-mapping',
+        label: 'Category mapping',
+        icon: 'tags',
+        description:
+          'Curated CJ-supplier-category to Sals3-Taxonomy-v1 decisions - platform-wide, since one decision reclassifies every product any seller sources under that supplier category.',
       },
     ],
   },

@@ -1,0 +1,8 @@
+# Normalize all text files to LF line endings in the repository,
+# regardless of each platform's local git config. Without this,
+# Windows's core.autocrlf converts files to CRLF on checkout, which
+# then conflicts with Prettier's default LF expectation - causing every
+# file to show as "needs reformatting" on a Windows checkout even when
+# nothing actually changed. Matches sals3-portal's own .gitattributes,
+# added for the identical reason.
+* text=auto eol=lf

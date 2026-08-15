@@ -15,6 +15,8 @@ export const AUDIT_ACTIONS = [
   'EMPLOYEE_SIGN_IN_FAILED',
   'EMPLOYEE_SIGNED_OUT',
   'EMPLOYEE_PROVISIONED',
+  'CATEGORY_MAPPING_DECIDED',
+  'CATEGORY_MAPPING_SUPERSEDED',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -25,6 +27,8 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   EMPLOYEE_SIGN_IN_FAILED: 'Sign-in failed',
   EMPLOYEE_SIGNED_OUT: 'Employee signed out',
   EMPLOYEE_PROVISIONED: 'Employee provisioned',
+  CATEGORY_MAPPING_DECIDED: 'Category mapping decided',
+  CATEGORY_MAPPING_SUPERSEDED: 'Category mapping superseded',
 };
 
 /**
@@ -37,11 +41,24 @@ export const AUDIT_ACTION_IS_NOTABLE: Record<AuditAction, boolean> = {
   EMPLOYEE_SIGN_IN_FAILED: true,
   EMPLOYEE_SIGNED_OUT: false,
   EMPLOYEE_PROVISIONED: true,
+  // Every product any seller sources under that supplier category is
+  // reclassified by this one decision - worth a reader's attention, same as
+  // provisioning an employee.
+  CATEGORY_MAPPING_DECIDED: true,
+  CATEGORY_MAPPING_SUPERSEDED: true,
 };
 
 /** `employee:<uuid>`, `global`, and so on - what the action touched. */
 export function employeeScope(employeeId: string): string {
   return `employee:${employeeId}`;
+}
+
+/** `category_mapping:CJ_DROPSHIPPING:<external category id>`. */
+export function categoryMappingScope(
+  provider: string,
+  externalCategoryId: string,
+): string {
+  return `category_mapping:${provider}:${externalCategoryId}`;
 }
 
 export const GLOBAL_SCOPE = 'global';

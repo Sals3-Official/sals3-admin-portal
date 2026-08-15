@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NAV_GROUPS, NAV_ITEMS } from './navigation';
 
 describe('admin navigation', () => {
-  it('covers the six ADR-014 capability domains plus an overview', () => {
+  it('covers the seven ADR-014 capability domains plus an overview', () => {
     expect(NAV_GROUPS.map((group) => group.label)).toEqual([
       'Overview',
       'Market governance',
@@ -11,6 +11,7 @@ describe('admin navigation', () => {
       'Providers',
       'Policy',
       'Pricing',
+      'Catalogue governance',
     ]);
   });
 

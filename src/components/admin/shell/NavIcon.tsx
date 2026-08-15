@@ -8,6 +8,7 @@ import {
   Plug,
   ScrollText,
   Store,
+  Tags,
 } from 'lucide-react';
 import type { NavIconName } from '@/lib/admin/navigation';
 
@@ -21,6 +22,7 @@ const ICONS = {
   'scroll-text': ScrollText,
   history: History,
   coins: Coins,
+  tags: Tags,
 } as const;
 
 type NavIconProps = {

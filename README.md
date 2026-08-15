@@ -3,10 +3,13 @@
 Internal platform control plane for the Sals3 ecosystem. Separate from the
 seller-facing `sals3-portal` and the customer-facing `sals3-ecommerce`.
 
-**Current state: repository bootstrap only.** There is no employee
-authentication, no permission model, no database schema, no policy
-publication, and no ecosystem data in this build. The single page states that
-plainly rather than rendering a placeholder dashboard.
+**Current state: identity and audit exist; almost everything else is still an
+honest notice.** Employee sign-in, a server-side session store, and an
+append-only audit trail are real and backed by this application's own
+database. There is still no permission/role model, no step-up authentication,
+and no policy publication pipe into `sals3-portal` or `sals3-ecommerce`. The
+one exception is category governance (below): decisions are recorded for
+real, but do not yet reach `sals3-portal` at all.
 
 ## What this product is
 
@@ -35,11 +38,14 @@ and merchant FX adjustments belong to Seller Portal (`ADR-015`).
 npm install
 ```
 
-Copy the environment template. Nothing in this build reads it yet; it exists
-so the next slice's configuration is visible in advance.
+Copy the environment template and fill in a local Postgres `DATABASE_URL`
+(see `.env.example` for the Gate 0 warning: it must never point at
+`sals3-portal`'s database) and a `SESSION_SECRET`.
 
 ```bash
 cp .env.example .env.local
+npm run db:migrate
+npm run create-employee
 ```
 
 ## Running
@@ -97,7 +103,12 @@ sals3-admin-portal/
 ├── src/
 │   ├── app/                  Next.js App Router routes, layout, global CSS
 │   ├── components/admin/     Admin-specific components
+│   ├── components/catalog-governance/  Category-mapping picker, form, table
 │   └── lib/                  Utilities
+│       ├── audit/             Append-only audit trail (record, query, vocabulary)
+│       ├── auth/               Employee sign-in and session
+│       ├── catalog-governance/ CJ-category-to-Sals3-v1 mapping decisions
+│       └── db/                  Drizzle schema and client
 ├── test/                     Shared test setup
 ├── AGENTS.md                 Mandatory operating rules (read before editing)
 └── CLAUDE.md                 Points at AGENTS.md
@@ -132,19 +143,39 @@ genuinely different problems:
 Fabricating a total, a seller count, or a "live" status instead is prohibited
 by `ADR-014`. A test asserts the bootstrap page renders no digits at all.
 
+## Category governance (2026-08-15)
+
+`Catalogue governance → Category mapping` records a curated decision mapping
+one CJ supplier category to a real Sals3 Taxonomy v1 (Google Product
+Taxonomy) category — ADR-014 assigns this platform-wide decision to this
+application alone, since one decision reclassifies every product any seller
+sources under that supplier category in `sals3-portal`. It reverses
+`sals3-portal`'s 2026-08-14 "the supplier's own category IS the Sals3
+category" auto-mirror decision.
+
+Two honest gaps, stated on the page itself rather than hidden:
+
+- No live queue of "CJ categories awaiting review" exists yet — that needs a
+  read endpoint into `sals3-portal` this repository does not have. A reviewer
+  records a decision today by typing in what they already observed there.
+- A decision recorded here is real and durable in this application's own
+  database, but does not yet reach `sals3-portal` at all — the publish/consume
+  pipe between the two applications (Gate 0) is not built.
+
+`src/lib/catalog-governance/sals3-taxonomy-v1.json` is a frozen copy of
+`sals3-portal`'s own seed data (5,595 rows, 21 L1 departments), duplicated
+here because Gate 0 forbids this application from reading `sals3-portal`'s
+database directly.
+
 ## Known limitations
 
-- No employee authentication or authorization exists. Nothing is protected
-  because nothing is behind it.
-- No database, schema, or migration exists. Admin Portal will own its **own**
-  database; it must never read or write `sals3-portal` tables directly.
-- No connection to `sals3-portal` or `sals3-ecommerce` exists.
-- Drizzle ORM and Better Auth are intentionally **not** installed yet. They
-  arrive with the first slice that actually uses them, so no unused dependency
-  ships unverified.
-- `shadcn/ui` primitives are not vendored yet. When the first component is
-  added, `globals.css` will also need `@import 'shadcn/tailwind.css'` as in
-  `sals3-portal`.
-- The first approved end-to-end domain is versioned market governance: seller
-  operating-country and buyer destination-country policy, independently
-  versioned, with reason, approval, audit, publish, and rollback.
+- No permission/role model or step-up authentication exists. Any signed-in
+  employee may reach every capability this application has.
+- No table beyond identity, audit, and category-mapping exists. Most
+  ADR-014 domains (market governance, seller accounts, marketing, providers,
+  policy publication, pricing) are still honest `UnavailableNotice` stubs with
+  no backing schema.
+- No publish/consume channel to `sals3-portal` or `sals3-ecommerce` exists for
+  any domain yet, category mapping included.
+- `shadcn/ui` primitives beyond `button`, `input`, `label`, `separator`,
+  `sheet`, `sidebar`, `skeleton`, and `tooltip` are not vendored yet.
